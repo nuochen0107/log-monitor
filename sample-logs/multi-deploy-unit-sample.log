@@ -1,0 +1,39 @@
+2026-08-28 09:10:01.120 INFO  [http-nio-8080-exec-1] c.sf.ibu.imp.manage.controller.CampaignManageController [traceId=IMP20260828091001001] [interface=/manage/campaign/detail] query campaign detail, campaignId=ACT202608280001, operatorId=01382761
+2026-08-28 09:10:01.286 INFO  [http-nio-8080-exec-1] c.sf.ibu.imp.service.activity.ActivityQueryService [traceId=IMP20260828091001001] [interface=/service/activity/query] query activity rule success, activityId=ACT202608280001
+2026-08-28 09:11:23.441 ERROR [http-nio-8080-exec-3] c.sf.ibu.imp.manage.controller.CouponManageController [traceId=IMP20260828091123002] [interface=/manage/coupon/publish] publish coupon failed, couponTemplateId=770088, stock=0, requestNo=REQ20260828091123
+java.lang.IllegalStateException: coupon inventory not enough, templateId=770088, campaignId=ACT202608280002
+	at com.sf.ibu.imp.manage.service.CouponPublishService.publish(CouponPublishService.java:96)
+	at com.sf.ibu.imp.manage.controller.CouponManageController.publish(CouponManageController.java:48)
+2026-08-28 09:13:05.019 INFO  [http-nio-8080-exec-5] c.sf.ibu.imp.backend.controller.OrderCouponController [traceId=IMP20260828091305003] [interface=/order/coupon/send] receive order coupon request, orderNo=CIOS202608280001, userId=90010021
+2026-08-28 09:13:05.762 ERROR [http-nio-8080-exec-5] c.sf.ibu.imp.backend.gateway.CouponServiceGateway [traceId=IMP20260828091305003] [interface=/order/coupon/send] remote call timeout, url=https://test-coupon-service/send, orderNo=CIOS202608280001
+java.net.SocketTimeoutException: Read timed out
+	at okhttp3.internal.http2.Http2Stream$StreamTimeout.newTimeoutException(Http2Stream.java:678)
+	at com.sf.ibu.imp.backend.gateway.CouponServiceGateway.sendCoupon(CouponServiceGateway.java:71)
+	at com.sf.ibu.imp.backend.service.OrderCouponService.send(OrderCouponService.java:56)
+2026-08-28 09:15:32.337 ERROR [KafkaConsumer-2] c.sf.ibu.imp.service.kafka.IomsOrderConsumer [traceId=IMP20260828091532004] [interface=/kafka/ioms/order] consume ioms order message failed, messageId=KFK202608280001, sfOrderId=CIOS202608280002
+com.alibaba.fastjson.JSONException: syntax error, expect {, actual string
+	at com.alibaba.fastjson.parser.DefaultJSONParser.parseObject(DefaultJSONParser.java:705)
+	at com.sf.ibu.imp.service.kafka.IomsOrderConsumer.onMessage(IomsOrderConsumer.java:42)
+2026-08-28 09:18:44.908 WARN  [http-nio-8080-exec-8] c.sf.ibu.imp.admin.web.AuthInterceptor [traceId=IMP20260828091844005] [interface=/admin-web/resource/list] invalid token, operatorId=01404276
+2026-08-28 09:20:17.521 ERROR [schedule-1] c.sf.ibu.imp.backend.job.ResendCouponJob [traceId=JOB20260828092017] [interface=/job/coupon/resend] resend coupon job failed, batchNo=BATCH20260828001
+org.springframework.dao.DeadlockLoserDataAccessException: Deadlock found when trying to get lock; try restarting transaction
+	at org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator.doTranslate(SQLErrorCodeSQLExceptionTranslator.java:267)
+	at com.sf.ibu.imp.backend.service.CouponResendService.resend(CouponResendService.java:89)
+2026-08-28 09:24:09.084 ERROR [http-nio-8080-exec-9] c.sf.ibu.imp.backend.os.controller.MemberBenefitController [traceId=IMP20260828092409006] [interface=/member/benefit/grant] validation failed, userId is blank, mobile=13900139000, benefitCode=SUPER_CARD
+java.lang.IllegalArgumentException: userId must not be blank
+	at com.sf.ibu.imp.backend.os.service.MemberBenefitService.validate(MemberBenefitService.java:37)
+	at com.sf.ibu.imp.backend.os.controller.MemberBenefitController.grant(MemberBenefitController.java:51)
+2026-08-28 09:26:41.673 INFO  [http-nio-8080-exec-2] c.sf.ibu.imp.proxy.controller.ProxyHealthController [traceId=IMP20260828092641007] [interface=/proxy/health] dependency health check start, target=member-service
+2026-08-28 09:26:42.012 ERROR [http-nio-8080-exec-2] c.sf.ibu.imp.proxy.gateway.MemberGateway [traceId=IMP20260828092641007] [interface=/proxy/health] remote call failed, target=member-service, url=https://test-member-service/health
+feign.RetryableException: connect timed out executing GET https://test-member-service/health
+	at feign.FeignException.errorExecuting(FeignException.java:268)
+	at com.sf.ibu.imp.proxy.gateway.MemberGateway.health(MemberGateway.java:29)
+2026-08-28 09:29:58.452 ERROR [http-nio-8080-exec-6] c.sf.ibu.imp.service.redis.ActivityLockService [traceId=IMP20260828092958008] [interface=/service/activity/lock] redis lock failed, activityId=ACT202608280009, lockKey=imp:activity:ACT202608280009
+redis.clients.jedis.exceptions.JedisConnectionException: Could not get a resource from the pool
+	at redis.clients.jedis.util.Pool.getResource(Pool.java:84)
+	at com.sf.ibu.imp.service.redis.ActivityLockService.lock(ActivityLockService.java:45)
+2026-08-28 09:32:15.991 ERROR [http-nio-8080-exec-4] c.sf.ibu.imp.manage.controller.CampaignManageController [traceId=IMP20260828093215009] [interface=/manage/campaign/save] save campaign failed, campaignId=ACT202608280010, operatorId=01382761
+org.springframework.dao.DuplicateKeyException: Duplicate entry 'ACT202608280010' for key 'uk_campaign_code'
+	at org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator.doTranslate(SQLErrorCodeSQLExceptionTranslator.java:247)
+	at com.sf.ibu.imp.manage.repository.CampaignRepository.save(CampaignRepository.java:63)
+2026-08-28 09:35:07.708 INFO  [http-nio-8080-exec-7] c.sf.ibu.imp.wechat.controller.WechatActivityController [traceId=IMP20260828093507010] [interface=/wechat/activity/list] query wechat activity list success, mobile=13800138000

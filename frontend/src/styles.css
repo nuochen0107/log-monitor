@@ -1,0 +1,54 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: Inter, "Microsoft YaHei", Arial, sans-serif; background: #f4f6f8; color: #1f2933; }
+.app-shell { min-height: 100vh; padding: 24px; }
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 20px 24px; background: #ffffff; border: 1px solid #dfe5ec; border-radius: 8px; }
+h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0; }
+p { margin: 0; }
+.topbar p { margin-top: 6px; color: #65758b; }
+.upload-tools { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.unit-select { width: 280px; }
+.log-type-select { width: 120px; }
+.el-select-dropdown__item { display: flex; justify-content: space-between; gap: 12px; }
+.el-select-dropdown__item small { color: #8a98aa; }
+.summary-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+.metric { background: #ffffff; border: 1px solid #dfe5ec; border-radius: 8px; padding: 18px; }
+.metric span { display: block; color: #65758b; font-size: 13px; }
+.metric strong { display: block; margin-top: 10px; font-size: 30px; line-height: 1; }
+.panel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+.content-grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; margin-top: 16px; }
+.panel { background: #ffffff; border: 1px solid #dfe5ec; border-radius: 8px; padding: 16px; overflow: hidden; }
+.trace-panel { margin-top: 16px; }
+.alert-panel { margin-top: 16px; }
+.chart { height: 320px; width: 100%; }
+.panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.panel-head h2 { margin: 0; font-size: 16px; }
+.panel-head.compact { margin-top: 20px; }
+.trace-search { display: flex; align-items: center; gap: 10px; width: min(460px, 100%); }
+.alert-editor { display: grid; grid-template-columns: minmax(180px, 1.2fr) minmax(220px, 1.4fr) 140px 120px 110px 100px; gap: 10px; margin-bottom: 14px; align-items: center; }
+.filter-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.filter-select { width: 260px; }
+.type-filter-select { width: 140px; }
+.rank-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #edf1f5; font-size: 13px; }
+.rank-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.template-row { padding: 10px 0; border-bottom: 1px solid #edf1f5; }
+.template-row strong { font-size: 13px; }
+.template-row p { margin-top: 6px; color: #65758b; font-size: 12px; line-height: 1.5; max-height: 54px; overflow: hidden; }
+.side-panel { min-height: 360px; }
+.trace-summary { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; color: #65758b; font-size: 13px; }
+.trace-summary span { padding: 4px 8px; border: 1px solid #dfe5ec; border-radius: 6px; background: #f7f9fb; }
+.trace-summary strong { color: #263445; font-weight: 600; overflow-wrap: anywhere; }
+.event-detail dl { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px 14px; margin: 0 0 16px; }
+.event-detail dt { color: #65758b; }
+.event-detail dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.event-detail h3 { margin: 16px 0 8px; font-size: 14px; }
+.event-detail pre { max-height: 220px; overflow: auto; margin: 0; padding: 12px; border: 1px solid #dfe5ec; border-radius: 6px; background: #f7f9fb; color: #263445; font-size: 12px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.dialog-actions { display: flex; justify-content: flex-end; margin-top: 14px; }
+.knowledge-form { display: grid; gap: 12px; }
+@media (max-width: 1000px) {
+  .summary-grid, .panel-grid, .content-grid { grid-template-columns: 1fr; }
+  .topbar, .panel-head { align-items: flex-start; flex-direction: column; }
+  .upload-tools { width: 100%; justify-content: flex-start; }
+  .trace-search { width: 100%; }
+  .alert-editor { grid-template-columns: 1fr; width: 100%; }
+  .unit-select, .log-type-select, .filter-select, .type-filter-select { width: 100%; }
+}

@@ -1,0 +1,22 @@
+﻿2026-08-27 10:01:21.123 INFO  [http-nio-8080-exec-1] c.s.i.c.adapter.activity.ImpActivityController [traceId=T20260827100121001] [interface=/impActivity/detail] request mobile=13800138000 acType=SUPER_CARD
+2026-08-27 10:01:21.530 INFO  [http-nio-8080-exec-1] c.s.i.c.service.activity.ImpActivityServiceImpl [traceId=T20260827100121001] query activity detail success acId=88001231
+2026-08-27 10:02:10.221 ERROR [http-nio-8080-exec-2] c.s.i.c.infrastructure.business.coupon.ImpCouponSendBusiness [traceId=T20260827100210002] [interface=/coupon/receive] coupon send failed, userId=90010021, couponTemplateId=770088, stock=0
+java.lang.IllegalStateException: coupon inventory not enough, templateId=770088, requestNo=REQ20260827100210
+	at com.sf.ibu.imp.coupon.infrastructure.business.coupon.ImpCouponSendBusiness.send(ImpCouponSendBusiness.java:88)
+	at com.sf.ibu.imp.coupon.service.rest.WechatMiniAppApiServiceImpl.receiveCoupon(WechatMiniAppApiServiceImpl.java:42)
+2026-08-27 10:03:44.011 ERROR [http-nio-8080-exec-3] c.s.i.c.infrastructure.gateway.ces.CesGatewayImpl [traceId=T20260827100344003] [interface=/coupon/lock] remote call timeout, url=https://test-coupon-service/lock, orderNo=CIOS202608270001
+java.net.SocketTimeoutException: Read timed out
+	at okhttp3.internal.http2.Http2Stream$StreamTimeout.newTimeoutException(Http2Stream.java:678)
+	at com.sf.ibu.imp.coupon.infrastructure.gateway.ces.CesGatewayImpl.lockCoupon(CesGatewayImpl.java:52)
+2026-08-27 10:05:03.301 ERROR [KafkaConsumer-1] c.s.i.c.infrastructure.kafka.ioms.IomsOrderKafkaListener [traceId=T20260827100503004] consume ioms order message failed, messageId=KFK202608270001, sfOrderId=CIOS202608270002
+com.alibaba.fastjson.JSONException: syntax error, expect {, actual string
+	at com.alibaba.fastjson.parser.DefaultJSONParser.parseObject(DefaultJSONParser.java:705)
+	at com.sf.ibu.imp.coupon.infrastructure.kafka.ioms.IomsOrderKafkaListener.onMessageItem(IomsOrderKafkaListener.java:36)
+2026-08-27 10:07:18.030 ERROR [schedule-1] c.s.i.c.infrastructure.job.coupon.ResendCouponJob [traceId=JOB20260827100718] resend coupon job failed, batchNo=BATCH20260827001
+org.springframework.dao.DeadlockLoserDataAccessException: Deadlock found when trying to get lock; try restarting transaction
+	at org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator.doTranslate(SQLErrorCodeSQLExceptionTranslator.java:267)
+	at com.sf.ibu.imp.coupon.infrastructure.business.coupon.ImpResendCouponBusiness.resendCoupon(ImpResendCouponBusiness.java:64)
+2026-08-27 10:08:59.870 WARN  [http-nio-8080-exec-4] c.s.i.c.adapter.activity.ImpActivityController [traceId=T20260827100859005] [interface=/impActivity/registerReceiveCoupon] invalid param, userId is blank
+2026-08-27 10:09:12.100 ERROR [http-nio-8080-exec-5] c.s.i.c.service.activity.ImpRegisterSendCouponExe [traceId=T20260827100912006] [interface=/impActivity/registerReceiveCoupon] validation failed, userId is blank, mobile=13900139000
+java.lang.IllegalArgumentException: userId must not be blank
+	at com.sf.ibu.imp.coupon.service.activity.executor.ImpRegisterSendCouponExe.validate(ImpRegisterSendCouponExe.java:31)

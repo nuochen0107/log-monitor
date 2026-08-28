@@ -1,0 +1,13 @@
+/backend/target/
+/backend/data/
+/frontend/node_modules/
+/frontend/dist/
+/.m2/
+/.tmp_compile/
+/target/
+/data/
+*.log
+!/sample-logs/*.log
+.idea/
+.vscode/
+.DS_Store
