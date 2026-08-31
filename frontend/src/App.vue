@@ -43,6 +43,42 @@
       <div class="panel"><div ref="typeRef" class="chart"></div></div>
     </section>
 
+    <section class="panel task-panel">
+      <div class="panel-head">
+        <h2>分析任务</h2>
+        <div class="task-filter">
+          <el-select v-model="taskFilters.deployUnitId" placeholder="全部部署单元" clearable filterable>
+            <el-option
+              v-for="unit in deployUnits"
+              :key="unit.id"
+              :label="`${unit.appCode} / ${unit.unitName}`"
+              :value="unit.id"
+            />
+          </el-select>
+          <el-button type="primary" plain @click="loadTasks">查询</el-button>
+        </div>
+      </div>
+      <el-table :data="tasks" size="small" max-height="300">
+        <el-table-column prop="id" label="任务ID" width="90" />
+        <el-table-column prop="taskName" label="文件名" min-width="220" show-overflow-tooltip />
+        <el-table-column prop="logType" label="日志类型" width="100" />
+        <el-table-column prop="status" label="状态" width="90">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 'SUCCESS' ? 'success' : row.status === 'FAILED' ? 'danger' : 'warning'" size="small">{{ row.status }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="totalLines" label="总行数" width="90" />
+        <el-table-column prop="errorCount" label="异常数" width="90" />
+        <el-table-column prop="costMs" label="耗时ms" width="100" />
+        <el-table-column prop="createdAt" label="创建时间" width="170" />
+        <el-table-column label="操作" width="110" fixed="right">
+          <template #default="{ row }">
+            <el-button text type="primary" @click="filterByTask(row)">查看异常</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </section>
+
     <section class="content-grid">
       <div class="panel">
         <div class="panel-head"><h2>异常事件</h2><el-button text @click="loadAll">刷新</el-button></div>
@@ -58,9 +94,13 @@
           <el-select v-model="eventFilters.type" placeholder="全部类型" clearable class="type-filter-select">
             <el-option v-for="type in exceptionTypes" :key="type" :label="type" :value="type" />
           </el-select>
-          <el-button type="primary" plain @click="loadEvents">查询</el-button>
+          <el-button type="primary" plain @click="queryEvents">查询</el-button>
         </div>
-        <el-table :data="events" height="360" size="small">
+        <div v-if="activeTaskFilter" class="active-filter">
+          <span>当前仅查看任务 #{{ activeTaskFilter.id }} 的异常</span>
+          <el-button text type="primary" @click="clearTaskFilter">清除</el-button>
+        </div>
+        <el-table :data="events" max-height="360" size="small" empty-text="暂无异常事件">
           <el-table-column prop="eventTime" label="时间" width="170" />
           <el-table-column prop="exceptionType" label="类型" width="100" />
           <el-table-column prop="classifyScore" label="分数" width="80" />
@@ -123,41 +163,78 @@
 
     <section class="panel alert-panel">
       <div class="panel-head"><h2>告警中心</h2><el-button text @click="loadAlerts">刷新</el-button></div>
-      <div class="alert-editor">
-        <el-input v-model="alertRuleForm.ruleName" placeholder="规则名称" />
-        <el-select v-model="alertRuleForm.deployUnitId" placeholder="全部部署单元" clearable filterable>
-          <el-option
-            v-for="unit in deployUnits"
-            :key="unit.id"
-            :label="`${unit.appCode} / ${unit.unitName}`"
-            :value="unit.id"
-          />
-        </el-select>
-        <el-select v-model="alertRuleForm.exceptionType" placeholder="异常类型" clearable>
-          <el-option v-for="type in exceptionTypes" :key="type" :label="type" :value="type" />
-        </el-select>
-        <el-input-number v-model="alertRuleForm.thresholdCount" :min="1" :max="100" controls-position="right" />
-        <el-select v-model="alertRuleForm.severity">
-          <el-option label="HIGH" value="HIGH" />
-          <el-option label="MEDIUM" value="MEDIUM" />
-          <el-option label="LOW" value="LOW" />
-        </el-select>
-        <el-button type="primary" @click="saveRule">保存规则</el-button>
+      <div class="alert-layout">
+        <div>
+          <div class="sub-head">新建告警规则</div>
+          <el-form label-position="top" class="alert-editor">
+            <el-form-item label="规则名称">
+              <el-input v-model="alertRuleForm.ruleName" placeholder="例如：RPC 超时告警" />
+            </el-form-item>
+            <el-form-item label="适用部署单元">
+              <el-select v-model="alertRuleForm.deployUnitId" placeholder="全部部署单元" clearable filterable>
+                <el-option
+                  v-for="unit in deployUnits"
+                  :key="unit.id"
+                  :label="`${unit.appCode} / ${unit.unitName}`"
+                  :value="unit.id"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="异常类型">
+              <el-select v-model="alertRuleForm.exceptionType" placeholder="任意异常类型" clearable>
+                <el-option v-for="type in exceptionTypes" :key="type" :label="type" :value="type" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="触发次数">
+              <el-input-number v-model="alertRuleForm.thresholdCount" :min="1" :max="100" controls-position="right" />
+            </el-form-item>
+            <el-form-item label="告警级别">
+              <el-select v-model="alertRuleForm.severity">
+                <el-option label="高" value="HIGH" />
+                <el-option label="中" value="MEDIUM" />
+                <el-option label="低" value="LOW" />
+              </el-select>
+            </el-form-item>
+            <el-button type="primary" @click="saveRule">保存规则</el-button>
+          </el-form>
+        </div>
+        <div>
+          <div class="sub-head">已配置规则</div>
+          <el-table :data="alertRules" size="small" max-height="250" empty-text="暂无告警规则">
+            <el-table-column prop="ruleName" label="规则" min-width="160" show-overflow-tooltip />
+            <el-table-column label="条件" min-width="260" show-overflow-tooltip>
+              <template #default="{ row }">{{ formatRule(row) }}</template>
+            </el-table-column>
+            <el-table-column label="级别" width="80">
+              <template #default="{ row }">
+                <el-tag :type="severityTag(row.severity)" size="small">{{ severityText(row.severity) }}</el-tag>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
       </div>
-      <el-table :data="alertEvents" size="small" max-height="300">
+
+      <div class="sub-head alert-event-head">告警事件</div>
+      <el-table :data="alertEvents" size="small" max-height="300" empty-text="暂无告警事件">
         <el-table-column prop="createdAt" label="时间" width="170" />
         <el-table-column prop="severity" label="级别" width="90">
           <template #default="{ row }">
-            <el-tag :type="row.severity === 'HIGH' ? 'danger' : row.severity === 'MEDIUM' ? 'warning' : 'info'" size="small">{{ row.severity }}</el-tag>
+            <el-tag :type="severityTag(row.severity)" size="small">{{ severityText(row.severity) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="90" />
+        <el-table-column prop="status" label="状态" width="90">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 'CLOSED' ? 'info' : 'danger'" size="small">{{ row.status === 'CLOSED' ? '已关闭' : '待处理' }}</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="exceptionType" label="类型" width="110" />
         <el-table-column prop="triggerCount" label="次数" width="80" />
         <el-table-column prop="alertTitle" label="告警内容" min-width="320" show-overflow-tooltip />
+        <el-table-column prop="closedAt" label="关闭时间" width="170" />
         <el-table-column label="操作" width="90" fixed="right">
           <template #default="{ row }">
-            <el-button text type="primary" :disabled="row.status === 'CLOSED'" @click="closeAlert(row)">关闭</el-button>
+            <el-button v-if="row.status !== 'CLOSED'" text type="primary" @click="closeAlert(row)">关闭</el-button>
+            <span v-else class="closed-text">已处理</span>
           </template>
         </el-table-column>
       </el-table>
@@ -228,11 +305,12 @@
 import { nextTick, onMounted, ref } from 'vue'
 import * as echarts from 'echarts'
 import { ElMessage } from 'element-plus'
-import { closeAlertEvent, getAlertEvents, getAlertRules, getDeployUnitRanking, getDeployUnits, getExceptionEvents, getKnowledge, getSummary, getTopInterfaces, getTopTemplates, getTraceChain, getTrend, getTypeDistribution, saveAlertRule, saveFeedback, saveKnowledge, uploadLog } from './api'
+import { closeAlertEvent, getAlertEvents, getAlertRules, getDeployUnitRanking, getDeployUnits, getExceptionEvents, getKnowledge, getSummary, getTasks, getTopInterfaces, getTopTemplates, getTraceChain, getTrend, getTypeDistribution, saveAlertRule, saveFeedback, saveKnowledge, uploadLog } from './api'
 
 const summary = ref({})
 const events = ref([])
 const knowledge = ref([])
+const tasks = ref([])
 const templates = ref([])
 const topInterfaces = ref([])
 const alertEvents = ref([])
@@ -244,10 +322,15 @@ const selectedLogType = ref('APPLICATION')
 const exceptionTypes = ['COUPON', 'RPC', 'SQL', 'KAFKA', 'JOB', 'REDIS', 'PARAMETER', 'SYSTEM']
 const eventFilters = ref({
   deployUnitId: null,
+  taskId: null,
   type: ''
+})
+const taskFilters = ref({
+  deployUnitId: null
 })
 const eventDetailVisible = ref(false)
 const selectedEvent = ref(null)
+const activeTaskFilter = ref(null)
 const traceKeyword = ref('')
 const traceChain = ref(null)
 const alertRuleForm = ref({
@@ -287,6 +370,7 @@ async function loadAll() {
     selectedDeployUnitId.value = deployUnits.value[0].id
   }
   summary.value = await getSummary()
+  await loadTasks()
   await loadEvents()
   await loadAlerts()
   knowledge.value = await getKnowledge()
@@ -295,6 +379,34 @@ async function loadAll() {
   const interfaces = await getTopInterfaces()
   topInterfaces.value = Object.entries(interfaces).map(([name, value]) => ({ name, value }))
   await renderCharts()
+}
+
+async function loadTasks() {
+  const params = {}
+  if (taskFilters.value.deployUnitId) {
+    params.deployUnitId = taskFilters.value.deployUnitId
+  }
+  tasks.value = await getTasks(params)
+}
+
+async function filterByTask(task) {
+  eventFilters.value.taskId = task.id
+  eventFilters.value.deployUnitId = task.deployUnitId
+  activeTaskFilter.value = task
+  await loadEvents()
+  ElMessage.success(`已筛选任务 #${task.id} 的异常事件`)
+}
+
+async function clearTaskFilter() {
+  eventFilters.value.taskId = null
+  activeTaskFilter.value = null
+  await loadEvents()
+}
+
+async function queryEvents() {
+  eventFilters.value.taskId = null
+  activeTaskFilter.value = null
+  await loadEvents()
 }
 
 async function loadAlerts() {
@@ -327,6 +439,31 @@ async function closeAlert(row) {
   ElMessage.success('告警已关闭')
   await loadAlerts()
   summary.value = await getSummary()
+}
+
+function formatRule(rule) {
+  const unit = rule.deployUnitId ? getDeployUnitName(rule.deployUnitId) : '全部部署单元'
+  const type = rule.exceptionType || '任意异常'
+  const threshold = rule.thresholdCount || 1
+  return `${unit}，单次分析任务内 ${type} 达到 ${threshold} 次触发`
+}
+
+function getDeployUnitName(id) {
+  const unit = deployUnits.value.find(item => item.id === id)
+  return unit ? `${unit.appCode} / ${unit.unitName}` : `部署单元 #${id}`
+}
+
+function severityTag(severity) {
+  if (severity === 'HIGH') return 'danger'
+  if (severity === 'MEDIUM') return 'warning'
+  return 'info'
+}
+
+function severityText(severity) {
+  if (severity === 'HIGH') return '高'
+  if (severity === 'MEDIUM') return '中'
+  if (severity === 'LOW') return '低'
+  return severity || '-'
 }
 
 function newKnowledgeForm() {
@@ -374,6 +511,9 @@ async function loadEvents() {
   const params = { page: 1, size: 50 }
   if (eventFilters.value.deployUnitId) {
     params.deployUnitId = eventFilters.value.deployUnitId
+  }
+  if (eventFilters.value.taskId) {
+    params.taskId = eventFilters.value.taskId
   }
   if (eventFilters.value.type) {
     params.type = eventFilters.value.type

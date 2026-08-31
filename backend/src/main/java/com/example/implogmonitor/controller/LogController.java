@@ -8,10 +8,7 @@ import com.example.implogmonitor.entity.AnalysisTask;
 import com.example.implogmonitor.entity.LogRecord;
 import com.example.implogmonitor.mapper.AnalysisTaskMapper;
 import com.example.implogmonitor.mapper.LogRecordMapper;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.Comparator;
@@ -30,6 +27,11 @@ public class LogController {
         return ApiResponse.ok(analysisTaskMapper.selectList(new LambdaQueryWrapper<AnalysisTask>()
                 .eq(deployUnitId != null, AnalysisTask::getDeployUnitId, deployUnitId)
                 .orderByDesc(AnalysisTask::getId)));
+    }
+
+    @GetMapping("/tasks/{id}")
+    public ApiResponse<AnalysisTask> taskDetail(@PathVariable Long id) {
+        return ApiResponse.ok(analysisTaskMapper.selectById(id));
     }
 
     @GetMapping("/records")

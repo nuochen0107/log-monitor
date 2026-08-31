@@ -49,8 +49,8 @@ export async function getDeployUnitRanking() {
   return data.data
 }
 
-export async function getTasks() {
-  const { data } = await request.get('/logs/tasks')
+export async function getTasks(params = {}) {
+  const { data } = await request.get('/logs/tasks', { params })
   return data.data
 }
 
