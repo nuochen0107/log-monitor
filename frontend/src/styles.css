@@ -15,11 +15,14 @@ p { margin: 0; }
 .metric span { display: block; color: #65758b; font-size: 13px; }
 .metric strong { display: block; margin-top: 10px; font-size: 30px; line-height: 1; }
 .panel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
-.content-grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; align-items: start; margin-top: 16px; }
+.workbench-layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; align-items: start; margin-top: 16px; }
+.workbench-main { min-width: 0; }
+.exception-panel { min-width: 0; }
 .panel { background: #ffffff; border: 1px solid #dfe5ec; border-radius: 8px; padding: 16px; overflow: hidden; }
 .task-panel { margin-top: 16px; }
 .trace-panel { margin-top: 16px; }
 .alert-panel { margin-top: 16px; }
+.knowledge-panel { margin-top: 16px; }
 .chart { height: 320px; width: 100%; }
 .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .panel-head h2 { margin: 0; font-size: 16px; }
@@ -41,7 +44,7 @@ p { margin: 0; }
 .template-row { padding: 10px 0; border-bottom: 1px solid #edf1f5; }
 .template-row strong { font-size: 13px; }
 .template-row p { margin-top: 6px; color: #65758b; font-size: 12px; line-height: 1.5; max-height: 54px; overflow: hidden; }
-.side-panel { min-height: 360px; }
+.side-panel { min-height: 0; }
 .trace-summary { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; color: #65758b; font-size: 13px; }
 .trace-summary span { padding: 4px 8px; border: 1px solid #dfe5ec; border-radius: 6px; background: #f7f9fb; }
 .trace-summary strong { color: #263445; font-weight: 600; overflow-wrap: anywhere; }
@@ -54,7 +57,7 @@ p { margin: 0; }
 .knowledge-form { display: grid; gap: 12px; }
 .closed-text { color: #8a98aa; font-size: 13px; }
 @media (max-width: 1000px) {
-  .summary-grid, .panel-grid, .content-grid { grid-template-columns: 1fr; }
+  .summary-grid, .panel-grid, .workbench-layout { grid-template-columns: 1fr; }
   .topbar, .panel-head { align-items: flex-start; flex-direction: column; }
   .upload-tools { width: 100%; justify-content: flex-start; }
   .trace-search, .task-filter { width: 100%; }

@@ -79,8 +79,9 @@
       </el-table>
     </section>
 
-    <section class="content-grid">
-      <div class="panel">
+    <div class="workbench-layout">
+      <div class="workbench-main">
+        <section class="panel exception-panel">
         <div class="panel-head"><h2>异常事件</h2><el-button text @click="loadAll">刷新</el-button></div>
         <div class="filter-bar">
           <el-select v-model="eventFilters.deployUnitId" placeholder="全部部署单元" clearable filterable class="filter-select">
@@ -114,9 +115,135 @@
             </template>
           </el-table-column>
         </el-table>
+        </section>
+
+        <section class="panel trace-panel">
+          <div class="panel-head">
+            <h2>Trace 链路定位</h2>
+            <div class="trace-search">
+              <el-input v-model="traceKeyword" placeholder="输入 traceId" clearable />
+              <el-button type="primary" plain @click="loadTraceChain(traceKeyword)">查询</el-button>
+            </div>
+          </div>
+          <div v-if="traceChain" class="trace-summary">
+            <span>日志 {{ traceChain.logCount || 0 }} 条</span>
+            <span>异常 {{ traceChain.exceptionCount || 0 }} 条</span>
+            <strong>{{ traceChain.rootSummary }}</strong>
+          </div>
+          <el-table :data="traceChain?.records || []" size="small" max-height="320" row-key="id">
+            <el-table-column prop="logTime" label="时间" width="170" />
+            <el-table-column prop="level" label="级别" width="80">
+              <template #default="{ row }">
+                <el-tag :type="row.level === 'ERROR' ? 'danger' : row.level === 'WARN' ? 'warning' : 'info'" size="small">{{ row.level }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="interfaceName" label="接口" width="220" />
+            <el-table-column prop="loggerName" label="类名" width="260" show-overflow-tooltip />
+            <el-table-column prop="message" label="日志内容" min-width="360" show-overflow-tooltip />
+          </el-table>
+        </section>
+
+        <section class="panel alert-panel">
+          <div class="panel-head"><h2>告警中心</h2><el-button text @click="loadAlerts">刷新</el-button></div>
+          <div class="alert-layout">
+            <div>
+              <div class="sub-head">新建告警规则</div>
+              <el-form label-position="top" class="alert-editor">
+                <el-form-item label="规则名称">
+                  <el-input v-model="alertRuleForm.ruleName" placeholder="例如：RPC 超时告警" />
+                </el-form-item>
+                <el-form-item label="适用部署单元">
+                  <el-select v-model="alertRuleForm.deployUnitId" placeholder="全部部署单元" clearable filterable>
+                    <el-option
+                      v-for="unit in deployUnits"
+                      :key="unit.id"
+                      :label="`${unit.appCode} / ${unit.unitName}`"
+                      :value="unit.id"
+                    />
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="异常类型">
+                  <el-select v-model="alertRuleForm.exceptionType" placeholder="任意异常类型" clearable>
+                    <el-option v-for="type in exceptionTypes" :key="type" :label="type" :value="type" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="触发次数">
+                  <el-input-number v-model="alertRuleForm.thresholdCount" :min="1" :max="100" controls-position="right" />
+                </el-form-item>
+                <el-form-item label="告警级别">
+                  <el-select v-model="alertRuleForm.severity">
+                    <el-option label="高" value="HIGH" />
+                    <el-option label="中" value="MEDIUM" />
+                    <el-option label="低" value="LOW" />
+                  </el-select>
+                </el-form-item>
+                <el-button type="primary" @click="saveRule">保存规则</el-button>
+              </el-form>
+            </div>
+            <div>
+              <div class="sub-head">已配置规则</div>
+              <el-table :data="alertRules" size="small" max-height="250" empty-text="暂无告警规则">
+                <el-table-column prop="ruleName" label="规则" min-width="160" show-overflow-tooltip />
+                <el-table-column label="条件" min-width="260" show-overflow-tooltip>
+                  <template #default="{ row }">{{ formatRule(row) }}</template>
+                </el-table-column>
+                <el-table-column label="级别" width="80">
+                  <template #default="{ row }">
+                    <el-tag :type="severityTag(row.severity)" size="small">{{ severityText(row.severity) }}</el-tag>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+          </div>
+
+          <div class="sub-head alert-event-head">告警事件</div>
+          <el-table :data="alertEvents" size="small" max-height="300" empty-text="暂无告警事件">
+            <el-table-column prop="createdAt" label="时间" width="170" />
+            <el-table-column prop="severity" label="级别" width="90">
+              <template #default="{ row }">
+                <el-tag :type="severityTag(row.severity)" size="small">{{ severityText(row.severity) }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="status" label="状态" width="90">
+              <template #default="{ row }">
+                <el-tag :type="row.status === 'CLOSED' ? 'info' : 'danger'" size="small">{{ row.status === 'CLOSED' ? '已关闭' : '待处理' }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="exceptionType" label="类型" width="110" />
+            <el-table-column prop="triggerCount" label="次数" width="80" />
+            <el-table-column prop="alertTitle" label="告警内容" min-width="320" show-overflow-tooltip />
+            <el-table-column prop="closedAt" label="关闭时间" width="170" />
+            <el-table-column label="操作" width="90" fixed="right">
+              <template #default="{ row }">
+                <el-button v-if="row.status !== 'CLOSED'" text type="primary" @click="closeAlert(row)">关闭</el-button>
+                <span v-else class="closed-text">已处理</span>
+              </template>
+            </el-table-column>
+          </el-table>
+        </section>
+
+        <section class="panel knowledge-panel">
+          <div class="panel-head"><h2>知识库</h2><el-button type="primary" plain @click="openKnowledgeEditor()">新增知识</el-button></div>
+          <el-table :data="knowledge" size="small">
+            <el-table-column prop="exceptionType" label="类型" width="120" />
+            <el-table-column prop="title" label="标题" width="180" />
+            <el-table-column prop="keywords" label="关键词" min-width="260" />
+            <el-table-column prop="solution" label="处理建议" min-width="360" show-overflow-tooltip />
+            <el-table-column prop="enabled" label="状态" width="90">
+              <template #default="{ row }">
+                <el-tag :type="row.enabled === 1 ? 'success' : 'info'" size="small">{{ row.enabled === 1 ? '启用' : '停用' }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="90" fixed="right">
+              <template #default="{ row }">
+                <el-button text type="primary" @click="openKnowledgeEditor(row)">编辑</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </section>
       </div>
 
-      <div class="panel side-panel">
+      <section class="panel side-panel">
         <div class="panel-head"><h2>部署单元异常排行</h2></div>
         <div v-for="item in deployUnitRanking" :key="item.deployUnitId" class="rank-row">
           <span>{{ item.appCode }} / {{ item.unitName }}</span><strong>{{ item.value }}</strong>
@@ -132,133 +259,8 @@
           <strong>{{ item.exceptionType }} · {{ item.occurCount }}</strong>
           <p>{{ item.templateText }}</p>
         </div>
-      </div>
-    </section>
-
-    <section class="panel trace-panel">
-      <div class="panel-head">
-        <h2>Trace 链路定位</h2>
-        <div class="trace-search">
-          <el-input v-model="traceKeyword" placeholder="输入 traceId" clearable />
-          <el-button type="primary" plain @click="loadTraceChain(traceKeyword)">查询</el-button>
-        </div>
-      </div>
-      <div v-if="traceChain" class="trace-summary">
-        <span>日志 {{ traceChain.logCount || 0 }} 条</span>
-        <span>异常 {{ traceChain.exceptionCount || 0 }} 条</span>
-        <strong>{{ traceChain.rootSummary }}</strong>
-      </div>
-      <el-table :data="traceChain?.records || []" size="small" max-height="320" row-key="id">
-        <el-table-column prop="logTime" label="时间" width="170" />
-        <el-table-column prop="level" label="级别" width="80">
-          <template #default="{ row }">
-            <el-tag :type="row.level === 'ERROR' ? 'danger' : row.level === 'WARN' ? 'warning' : 'info'" size="small">{{ row.level }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="interfaceName" label="接口" width="220" />
-        <el-table-column prop="loggerName" label="类名" width="260" show-overflow-tooltip />
-        <el-table-column prop="message" label="日志内容" min-width="360" show-overflow-tooltip />
-      </el-table>
-    </section>
-
-    <section class="panel alert-panel">
-      <div class="panel-head"><h2>告警中心</h2><el-button text @click="loadAlerts">刷新</el-button></div>
-      <div class="alert-layout">
-        <div>
-          <div class="sub-head">新建告警规则</div>
-          <el-form label-position="top" class="alert-editor">
-            <el-form-item label="规则名称">
-              <el-input v-model="alertRuleForm.ruleName" placeholder="例如：RPC 超时告警" />
-            </el-form-item>
-            <el-form-item label="适用部署单元">
-              <el-select v-model="alertRuleForm.deployUnitId" placeholder="全部部署单元" clearable filterable>
-                <el-option
-                  v-for="unit in deployUnits"
-                  :key="unit.id"
-                  :label="`${unit.appCode} / ${unit.unitName}`"
-                  :value="unit.id"
-                />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="异常类型">
-              <el-select v-model="alertRuleForm.exceptionType" placeholder="任意异常类型" clearable>
-                <el-option v-for="type in exceptionTypes" :key="type" :label="type" :value="type" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="触发次数">
-              <el-input-number v-model="alertRuleForm.thresholdCount" :min="1" :max="100" controls-position="right" />
-            </el-form-item>
-            <el-form-item label="告警级别">
-              <el-select v-model="alertRuleForm.severity">
-                <el-option label="高" value="HIGH" />
-                <el-option label="中" value="MEDIUM" />
-                <el-option label="低" value="LOW" />
-              </el-select>
-            </el-form-item>
-            <el-button type="primary" @click="saveRule">保存规则</el-button>
-          </el-form>
-        </div>
-        <div>
-          <div class="sub-head">已配置规则</div>
-          <el-table :data="alertRules" size="small" max-height="250" empty-text="暂无告警规则">
-            <el-table-column prop="ruleName" label="规则" min-width="160" show-overflow-tooltip />
-            <el-table-column label="条件" min-width="260" show-overflow-tooltip>
-              <template #default="{ row }">{{ formatRule(row) }}</template>
-            </el-table-column>
-            <el-table-column label="级别" width="80">
-              <template #default="{ row }">
-                <el-tag :type="severityTag(row.severity)" size="small">{{ severityText(row.severity) }}</el-tag>
-              </template>
-            </el-table-column>
-          </el-table>
-        </div>
-      </div>
-
-      <div class="sub-head alert-event-head">告警事件</div>
-      <el-table :data="alertEvents" size="small" max-height="300" empty-text="暂无告警事件">
-        <el-table-column prop="createdAt" label="时间" width="170" />
-        <el-table-column prop="severity" label="级别" width="90">
-          <template #default="{ row }">
-            <el-tag :type="severityTag(row.severity)" size="small">{{ severityText(row.severity) }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="status" label="状态" width="90">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 'CLOSED' ? 'info' : 'danger'" size="small">{{ row.status === 'CLOSED' ? '已关闭' : '待处理' }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="exceptionType" label="类型" width="110" />
-        <el-table-column prop="triggerCount" label="次数" width="80" />
-        <el-table-column prop="alertTitle" label="告警内容" min-width="320" show-overflow-tooltip />
-        <el-table-column prop="closedAt" label="关闭时间" width="170" />
-        <el-table-column label="操作" width="90" fixed="right">
-          <template #default="{ row }">
-            <el-button v-if="row.status !== 'CLOSED'" text type="primary" @click="closeAlert(row)">关闭</el-button>
-            <span v-else class="closed-text">已处理</span>
-          </template>
-        </el-table-column>
-      </el-table>
-    </section>
-
-    <section class="panel">
-      <div class="panel-head"><h2>知识库</h2><el-button type="primary" plain @click="openKnowledgeEditor()">新增知识</el-button></div>
-      <el-table :data="knowledge" size="small">
-        <el-table-column prop="exceptionType" label="类型" width="120" />
-        <el-table-column prop="title" label="标题" width="180" />
-        <el-table-column prop="keywords" label="关键词" min-width="260" />
-        <el-table-column prop="solution" label="处理建议" min-width="360" show-overflow-tooltip />
-        <el-table-column prop="enabled" label="状态" width="90">
-          <template #default="{ row }">
-            <el-tag :type="row.enabled === 1 ? 'success' : 'info'" size="small">{{ row.enabled === 1 ? '启用' : '停用' }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="90" fixed="right">
-          <template #default="{ row }">
-            <el-button text type="primary" @click="openKnowledgeEditor(row)">编辑</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </section>
+      </section>
+    </div>
 
     <el-dialog v-model="eventDetailVisible" title="异常详情" width="780px">
       <div v-if="selectedEvent" class="event-detail">
