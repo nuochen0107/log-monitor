@@ -33,9 +33,4 @@ npm run dev
 
 5. 上传 `sample-logs/marketing-platform-sample.log` 查看分析结果。
 
-## 论文定位
-
-系统采用独立代码库、独立数据库和独立部署方式，通过模拟日志或脱敏测试日志完成验证，不侵入原国际营销平台业务系统。
-
-更多启动细节见 docs/run-local.md。
 
